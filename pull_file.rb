@@ -25,12 +25,15 @@ class PullFile
 		end
 
 		def title pull_url
-			open_html(pull_url,"//div[@id='title']").children.text
+			title = open_html(pull_url,"//div[@id='title']").children.text
+			@chapter = title.split(' ').first
+			title
 		end
 
 		def write_novels novels,novel_name,title
-			unless File.exist? "#{novel_name}/#{title.delete '/'}.txt"
-				file = File.open("#{novel_name}/#{title.delete '/'}.txt","w+")
+			check_dir "#{novel_name}/#{@chapter}"
+			unless File.exist? "#{novel_name}/#{@chapter}/#{title.delete '/'}.txt"
+				file = File.open("#{novel_name}/#{@chapter}/#{title.delete '/'}.txt","w+")
 				file.syswrite novels.join('')
 			end
 		end
@@ -39,7 +42,7 @@ class PullFile
 			images.each do |picture|
 				img_file = open(picture) { |f| f.read }
 			  file_name = picture.split('/').last
-			  open("#{@novel_name}/#{file_name}", "wb") { |f| f.write(img_file) } unless File.exist? "#{@novel_name}/#{file_name}"
+			  open("#{@novel_name}/#{@chapter}/#{file_name}", "wb") { |f| f.write(img_file) } unless File.exist? "#{@novel_name}/#{file_name}"
 			end
 		end
 
@@ -69,8 +72,9 @@ class PullFile
 
 		# 确保目录存在
 		def check_dir dir
-			1.upto dir.split('/').length do |i|
-		    Dir.mkdir dir.split('/').first(i).join('/') unless Dir.exist? dir.split('/').first(i).join('/')
+			dirs = dir.split('/')
+			1.upto dirs.length do |i|
+		    Dir.mkdir dirs.first(i).join('/') unless Dir.exist? dirs.first(i).join('/')
 		  end
 		end
 
