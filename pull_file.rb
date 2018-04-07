@@ -14,19 +14,18 @@ class PullFile
 		check_dir novel_name
 
 		pull_urls.each do |pull_url|
-			write_novels novels(content(pull_url),title(pull_url)),@novel_name,@title
+			write_novels novels(content(pull_url),title(pull_url)),@novel_name,title(pull_url)
 			write_image images pull_url
 		end
 	end
 	
 	private
-
 		def content pull_url
 			open_html pull_url,"//div[@id='content']"
 		end
 
 		def title pull_url
-			@title=open_html(pull_url,"//div[@id='title']").children.text
+			open_html(pull_url,"//div[@id='title']").children.text
 		end
 
 		def write_novels novels,novel_name,title
@@ -70,7 +69,9 @@ class PullFile
 
 		# 确保目录存在
 		def check_dir dir
-			Dir.mkdir dir unless Dir.exist? dir
+			1.upto dir.split('/').length do |i|
+		    Dir.mkdir dir.split('/').first(i).join('/') unless Dir.exist? dir.split('/').first(i).join('/')
+		  end
 		end
 
 		# 获取各章节地址
