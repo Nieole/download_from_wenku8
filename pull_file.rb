@@ -4,24 +4,28 @@ require 'open-uri'
 class PullFile
 
 	attr_accessor :novel_name,:novel_url
-	
+
 	def initialize(options={})
 		@novel_url = options[:novel_url]
+		catalog_url
+		@novel_name = open_html(@catalog_url,"//div[@id='title']")[0]&.children&.text.delete_suffix('?')
 	end
 
 	def pull_file
-
-		check_dir novel_name
-
+		write_cover cover
 		pull_urls.each do |pull_url|
 			write_novels novels(content(pull_url),title(pull_url)),@novel_name,title(pull_url)
 			write_image images pull_url
 		end
 	end
-	
+
 	private
 		def content pull_url
 			open_html pull_url,"//div[@id='content']"
+		end
+
+		def cover
+			PullFile.send(:open_html,@novel_url,"//div[@id='content']//img").first.attributes["src"].value
 		end
 
 		def title pull_url
@@ -46,6 +50,12 @@ class PullFile
 			end
 		end
 
+		def write_cover cover
+			check_dir "#{@novel_name}"
+			cover_file = open(cover) {|f| f.read}
+			open("#{@novel_name}/#{@novel_name}.jpg","wb"){|f| f.write(cover_file)} unless File.exist? "#{@novel_name}/#{@novel_name}.jpg"
+		end
+
 		def novels content,title
 			novels = Array.new
 
@@ -65,11 +75,6 @@ class PullFile
 			images
 		end
 
-		# 获取小说名称
-		def novel_name
-			@novel_name = open_html(@novel_url,"//div[@id='title']")[0]&.children&.text.delete_suffix('?')
-		end
-
 		# 确保目录存在
 		def check_dir dir
 			dirs = dir.split('/')
@@ -81,10 +86,16 @@ class PullFile
 		# 获取各章节地址
 		def pull_urls
 			pull_urls = Array.new
-			open_html(@novel_url,"//table//a").each do |i|
-				pull_urls << @novel_url.delete_suffix('index.htm')+i&.attributes['href']&.content
+			open_html(@catalog_url,"//table//a").each do |i|
+				pull_urls << @catalog_url.delete_suffix('index.htm')+i&.attributes['href']&.content
 			end
 			pull_urls
+		end
+
+		def catalog_url
+			open_html(@novel_url,"//a").each do |i|
+				@catalog_url = i&.attributes['href']&.content if i&.children&.text == '小说目录'
+			end
 		end
 
 		def open_html url,xpath=nil
@@ -94,13 +105,4 @@ class PullFile
 				Nokogiri::HTML(open(url))
 			end
 		end
-
-		def self.open_html url,xpath=nil
-			if xpath
-				Nokogiri::HTML(open(url)).xpath(xpath)
-			else
-				Nokogiri::HTML(open(url))
-			end
-		end
 end
-

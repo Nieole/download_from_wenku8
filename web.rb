@@ -2,7 +2,7 @@ require 'net/http'
 require_relative "pull_file"
 
 # 需要爬取的总页数
-total_page = 1
+total_page = 116
 thread_num = 30
 # 去要爬取的页面地址
 target_url = URI("http://www.wenku8.com/modules/article/articlelist.php")
@@ -13,7 +13,7 @@ queue = SizedQueue.new (thread_num + 20)
 @total_urls ||= Array.new
 
 1.upto total_page do |page|
-    p "scaning #{page} page"
+  p "scaning #{page} page"
 
 	url = URI("#{target_url}?page=#{page}")
 
@@ -39,12 +39,7 @@ thread_num.times do
   threads << Thread.new do
     until queue.empty?
     	begin
-    		PullFile.send(:open_html,queue.pop,"//a").each do |i|
-					@novel_url = i&.attributes['href']&.content if i&.children&.text == '小说目录'
-				end
-
-				PullFile.new(novel_url:@novel_url).pull_file
-	      break if queue.size == 0
+				PullFile.new(novel_url:queue.pop).pull_file
     	rescue Exception => e
     		p e
     	end
