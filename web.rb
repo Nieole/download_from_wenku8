@@ -2,8 +2,9 @@ require 'net/http'
 require_relative "pull_file"
 
 # 需要爬取的总页数
-total_page = 116
+total_page = 1
 thread_num = 30
+dir_prefix = "novel"
 # 去要爬取的页面地址
 target_url = URI("http://www.wenku8.com/modules/article/articlelist.php")
 #账户的cookie
@@ -39,7 +40,7 @@ thread_num.times do
   threads << Thread.new do
     until queue.empty?
     	begin
-				PullFile.new(novel_url:queue.pop).pull_file
+				PullFile.new(novel_url:queue.pop,dir_prefix:dir_prefix).pull_file
     	rescue Exception => e
     		p e
     	end

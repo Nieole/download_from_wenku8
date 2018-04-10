@@ -7,6 +7,7 @@ class PullFile
 
 	def initialize(options={})
 		@novel_url = options[:novel_url]
+		@dir_prefix = options[:dir_prefix]
 		catalog_url
 		@novel_name = open_html(@catalog_url,"//div[@id='title']")[0]&.children&.text.delete_suffix('?')
 	end
@@ -35,9 +36,9 @@ class PullFile
 		end
 
 		def write_novels novels,novel_name,title
-			check_dir "#{novel_name}/#{@chapter}"
-			unless File.exist? "#{novel_name}/#{@chapter}/#{title.delete '/'}.txt"
-				file = File.open("#{novel_name}/#{@chapter}/#{title.delete '/'}.txt","w+")
+			check_dir "#{@dir_prefix}/#{novel_name}/#{@chapter}"
+			unless File.exist? "#{@dir_prefix}/#{novel_name}/#{@chapter}/#{title.delete '/'}.txt"
+				file = File.open("#{@dir_prefix}/#{novel_name}/#{@chapter}/#{title.delete '/'}.txt","w+")
 				file.syswrite novels.join('')
 			end
 		end
@@ -46,14 +47,14 @@ class PullFile
 			images.each do |picture|
 				img_file = open(picture) { |f| f.read }
 			  file_name = picture.split('/').last
-			  open("#{@novel_name}/#{@chapter}/#{file_name}", "wb") { |f| f.write(img_file) } unless File.exist? "#{@novel_name}/#{file_name}"
+			  open("#{@dir_prefix}/#{@novel_name}/#{@chapter}/#{file_name}", "wb") { |f| f.write(img_file) } unless File.exist? "#{@dir_prefix}/#{@novel_name}/#{file_name}"
 			end
 		end
 
 		def write_cover cover
-			check_dir "#{@novel_name}"
+			check_dir "#{@dir_prefix}/#{@novel_name}"
 			cover_file = open(cover) {|f| f.read}
-			open("#{@novel_name}/#{@novel_name}.jpg","wb"){|f| f.write(cover_file)} unless File.exist? "#{@novel_name}/#{@novel_name}.jpg"
+			open("#{@dir_prefix}/#{@novel_name}/#{@novel_name}.jpg","wb"){|f| f.write(cover_file)} unless File.exist? "#{@dir_prefix}/#{@novel_name}/#{@novel_name}.jpg"
 		end
 
 		def novels content,title
@@ -99,6 +100,14 @@ class PullFile
 		end
 
 		def open_html url,xpath=nil
+			if xpath
+				Nokogiri::HTML(open(url)).xpath(xpath)
+			else
+				Nokogiri::HTML(open(url))
+			end
+		end
+
+		def self.open_html url,xpath=nil
 			if xpath
 				Nokogiri::HTML(open(url)).xpath(xpath)
 			else
