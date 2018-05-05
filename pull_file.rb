@@ -26,7 +26,7 @@ class PullFile
 		end
 
 		def cover
-			PullFile.send(:open_html,@novel_url,"//div[@id='content']//img").first.attributes["src"].value
+			open_html(@novel_url,"//div[@id='content']//img").first.attributes["src"].value
 		end
 
 		def title pull_url
