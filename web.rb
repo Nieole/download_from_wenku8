@@ -16,36 +16,36 @@ queue = SizedQueue.new (thread_num + 20)
 1.upto total_page do |page|
   p "scaning #{page} page"
 
-	url = URI("#{target_url}?page=#{page}")
+  url = URI("#{target_url}?page=#{page}")
 
-	http = Net::HTTP.new(url.host,url.port)
-	headers = {
-	    'Cookie' => cookie
-	}
+  http = Net::HTTP.new(url.host, url.port)
+  headers = {
+      'Cookie' => cookie
+  }
 
-	response = http.get(url,headers)
-	regex=/http:\/\/www.wenku8.com\/book\/\d{2,5}.htm/
+  response = http.get(url, headers)
+  regex = /http:\/\/www.wenku8.com\/book\/\d{2,5}.htm/
 
-	@total_urls = (@total_urls | response.body.scan(regex).uniq)
+  @total_urls = (@total_urls | response.body.scan(regex).uniq)
 end
 
 Thread.new do
-	until @total_urls.empty?
-		queue.push @total_urls.pop
-	end
+  until @total_urls.empty?
+    queue.push @total_urls.pop
+  end
 end
 
 threads = Array.new
 thread_num.times do
   threads << Thread.new do
     until queue.empty?
-    	begin
-				PullFile.new(novel_url:queue.pop,dir_prefix:dir_prefix).pull_file
-    	rescue Exception => e
-    		p e
-    	end
+      begin
+        PullFile.new(novel_url: queue.pop, dir_prefix: dir_prefix).pull_file
+      rescue Exception => e
+        p e
+      end
     end
   end
 end
 
-threads.each{|thread| thread.join}
+threads.each {|thread| thread.join}
